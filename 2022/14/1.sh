@@ -36,7 +36,7 @@ do
       do
         for y in $(seq "$start_y" "$end_y")
         do
-          world["$x,$y"]="#"
+          world["$x,$y"]="🟩"
         done
       done
 
@@ -48,8 +48,8 @@ do
 done < "$1"
 
 function drop_sand {
-  sand_x=500
-  sand_y=0
+  sand_x=$drop_from_x
+  sand_y=$drop_from_y
 
   fell_off=1
 
@@ -83,7 +83,7 @@ function drop_sand {
     fi
     #No where to go, so we stay here
     fell_off=0
-    world["${sand_x},${sand_y}"]="O"
+    world["${sand_x},${sand_y}"]="🟤"
     break
   done
 
@@ -93,35 +93,58 @@ function drop_sand {
   fi
 }
 
+function draw_world {
+  world_output=""
+  start_at=0
+  if [[ "$max_y" -gt 50 ]]
+  then
+    if [[ "$sand_y" -gt 50 ]]
+    then
+      start_at=$(( sand_y - 25 ))
+      max=$(( sand_y + 25 ))
+    else
+      max=50
+    fi
+  else
+    max=$max_y
+  fi
+  for y in $(seq "$start_at" "$max")
+  do
+    line=""
+    for x in $(seq $(( min_x - 2)) $(( max_x + 2 )))
+    do
+      if [[ "${world[$x,$y]}" == "" ]]
+      then
+        line="${line}🟦"
+      else
+        line="${line}${world[$x,$y]}"
+      fi
+    done
+    world_output="${world_output}\n${line}"
+  done
+  clear
+  echo -e "$world_output"
+}
+
 end=0
 sand=0
+drop_from_x=500
+drop_from_y=0
+
+world["500,0"]="🔻"
 
 while [[ $end = 0 ]]
 do
   drop_sand
+  draw_world
   if [[ $end = 0 ]]
   then
     sand=$(( sand + 1 ))
   fi
 done
 
-world["500,0"]="x"
 
-#draw the world
-for y in $(seq 0 "$max_y")
-do
-  line=""
-  for x in $(seq "$min_x" "$max_x")
-  do
-    if [[ "${world[$x,$y]}" == "" ]]
-    then
-      line="${line}."
-    else
-      line="${line}${world[$x,$y]}"
-    fi
-  done
-  echo "$line"
-done
+draw_world
 
 echo
 echo "Sand: $sand"
